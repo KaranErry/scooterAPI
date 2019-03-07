@@ -115,7 +115,6 @@ def pay():
 		request.args['id'], \
 		float(request.args['lat']), \
 		float(request.args['lng'])	# parse request for end-reservation details
-	# TODO: put in documentation that this will raise a werkzeug.exceptions.BadRequestKeyError exception if the args are not there
 	
 	# try and find the scooter with specified id
 	db = init_db()
