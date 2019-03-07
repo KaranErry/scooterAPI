@@ -25,7 +25,6 @@ def search():
 		float(request.args['lat']), \
 		float(request.args['lng']), \
 		float(request.args['radius'])	# parse request for search criteria
-	# TODO: put in documentation that this will raise a werkzeug.exceptions.BadRequestKeyError exception if the args are not there
 	
 	db = init_db()	# initialize db
 	search_results = []
@@ -46,7 +45,6 @@ def search():
 @app.route('/reservation/start', methods=['GET'])
 def start_reservation():
 	reserve_id = request.args['id']	# parse request for id of scooter to be reserved
-	# TODO: put in documentation that this will raise a werkzeug.exceptions.BadRequestKeyError exception if the args are not there
 	db = init_db()
 	
 	# try and find the scooter with specified id
@@ -81,7 +79,6 @@ def end_reservation():
 	end_lat, end_lng = \
 		float(request.args['lat']), \
 		float(request.args['lng'])
-	# TODO: put in documentation that this will raise a werkzeug.exceptions.BadRequestKeyError exception if the args are not there
 	db = init_db()
 		
 	# try and find the scooter with specified id
@@ -226,5 +223,5 @@ def make_payment(cost):
 
 
 if __name__== "__main__":
-	# TODO: Turn debug flag off
+	# TODO: Turn debug flag off for production system
 	app.run('localhost', 8080, debug=True)
