@@ -2,13 +2,9 @@
 
 ## Introduction
 
-I was able to create a fully-functioning API (as per the stated requirements) using Python/Flask, and using a JSON file as the database.  All requests utilize the GET method.  I created dummy functions for the cost-calculation and payment-processing, to stand in for where the real functionality would go.  I tested against dummy data (that is still in the database file on the github repo), by sending GET requests simply through the URL bar of my browser.  Since all my responses are in JSON format, they were displayed as raw JSON text on the browser page. 
-
 ### Stack
 
-The implementation of this app uses Python/Flask, with JSON as the database. 
-
-Other frameworks used are:
+The implementation of this app uses Python/Flask, with JSON as the database. Other frameworks used are:
 
 * 'requests' framework for getting the body of requests
 * 'geopy' library for accurately calculating the “crow flies” distance between two lat/lng points
@@ -20,7 +16,7 @@ Other frameworks used are:
 
 ## API Endpoints
 
-### View *All* Available Scooters
+### View All Available Scooters
 
 #### Endpoints:
 ```
