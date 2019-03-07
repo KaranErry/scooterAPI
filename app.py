@@ -146,7 +146,7 @@ def pay():
 	else:
 		# no scooter with the id was found
 		response_dict = {	'result':False,
-						 	'msg':f'No scooter with id {scooter} was found.'
+						 	'msg':f'No scooter with id {scooter_id} was found.'
 						}
 	
 	return json.dumps(response_dict)	# return response dict	
