@@ -18,14 +18,13 @@ def search():
 	# TODO: put in documentation that this will raise a werkzeug.exceptions.BadRequestKeyError exception if the args are not there
 	db = init_db()	# initialize db
 	search_results = []
-	for scooter_dict in db:
-		scooter_lat, scooter_lng, scooter_radius = scooter_dict['lat'], scooter_dict['lng'], scooter_dict['radius'] # populate scooter attributes
+	for scooter in db:
 		# Calculate distance between the scooter location point and the search location point, in metres
-		distance = distance((scooter_lat, scooter_lng), (search_lat, search_lng)).m
-		if distance <= search_radius:
-			# this scooter is within the search area
-			search_results.append(scooter_dict['id'])
-	return search_results
+		distance = distance((scooter.lat, scooter.lng), (search_lat, search_lng)).m
+		if distance <= search_radius and not scooter.reserved:
+			# this scooter is available and within the search area
+			search_results.append({'id':scooter.id, 'lat':scooter.lat, 'lng':scooter.lng})
+	return json.dumps(search_results)	# return json-ified search results list
 
 	
 # Start a reservation 
@@ -42,11 +41,10 @@ def start_reservation():
 # End a reservation
 @app.route('/reservations/end', methods=['GET'])
 def end_reservation():
-	if 'id' in request.args:
-		id = request.args['id']
-		# TODO: try to end a reservation
-	else:
-		success = False
+	id = request.args['id']
+	# TODO: try to end a reservation
+	
+	# TODO: put in documentation that this will raise a werkzeug.exceptions.BadRequestKeyError exception if the 'id' arg is not there
 	
 	if success:
 		# TODO: calculate distance
@@ -58,27 +56,35 @@ def end_reservation():
 			
 # Pay for a completed reservation
 @app.route('/reservation/pay', methods=['GET'])
-def start_reservation():
-	# try to reserve a scooter
-	if success:
-		return render_template('res_start_success.html')
-	else:
-		return render_template('res_start_failure.html')
+def pay():
+	# TODO: implement mock payments process
+	return txn_id
 		
 		
 		
 def init_db():
 	db_json = open('scooter_db.json', 'r').read()
-	return json.loads(db_json)
+	db_list = json.loads(db_json)
+	# populate Scooter objects for easier access later
+	db = []
+	for scooter in db_list:
+		scooter_obj = Scooter(scooter['id'], scooter['lat'], scooter['lng'], scooter['reserved'])
+		db.append(scooter_obj)
+	return db
 	
-## class scooter for internal use
-#class Scooter:
-#	def __init__(self, scooter_id, lat, lng, reserved):
-#		self.scooter_id = scooter_id
-#		self.lat = lat
-#		self.lng = lng
-#		self.reserved = reserved
 		
 def write_db(db):
-	db_json = json.dumps(db)
+	db_list = {}
+	for scooter in db:
+		scooter_dict = {'id':scooter.id, 'lat':scooter.lat, 'lng':scooter.lng, 'reserved':scooter.reserved}
+		db_list.append(scooter_dict)
+	db_json = json.dumps(db_list)
 	open('scooter_db.json', 'w').write(db_json)
+		
+# class scooter for internal use
+class Scooter:
+	def __init__(self, scooter_id, lat, lng, reserved):
+		self.id = scooter_id
+		self.lat = lat
+		self.lng = lng
+		self.reserved = reserved
