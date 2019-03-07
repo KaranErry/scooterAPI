@@ -1,5 +1,7 @@
 from flask import Flask, render_template, request
 import geopy
+from werkzeug.exceptions import BadRequestKeyError
+
 
 app=Flask(__name__)
 
@@ -12,17 +14,28 @@ def home():
 @app.route('/', methods=['GET'])
 def search():
 	# TODO: Search for scooters and return
-	
-	return render_template('home.html')
+	try:
+		lat, lng, radius = request.args['lat'], request.args['lng'], request.args['radius']
+	except BadRequestKeyError:
+		# just redirect home
+	# TODO: search for scooters based on lat, lng, radius
+	# pseudocode:
+	# for each scooter
+	# 	if scooter location - specified location <= radius:
+	#	  add to list
+	# return the list
+#	return render_template('home.html')
+	return searchResults
 	
 # Start a reservation 
-@app.route('/reservation/start', methods=['GET'])
+@app.route('/reservation/start', methods=['POST'])
 def start_reservation():
 	# TODO: try to reserve a scooter
-	if success:
-		return render_template('res_start_success.html')
-	else:
-		return render_template('res_start_failure.html')
+	return success
+#	if success:
+#		return render_template('res_start_success.html')
+#	else:
+#		return render_template('res_start_failure.html')
 
 # End a reservation
 @app.route('/reservations/end', methods=['GET'])
@@ -48,3 +61,7 @@ def start_reservation():
 		return render_template('res_start_success.html')
 	else:
 		return render_template('res_start_failure.html')
+		
+def init_db():
+	db = json.loads(open('scooter_db.json', 'r').read())
+	return db
