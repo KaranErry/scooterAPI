@@ -9,7 +9,7 @@ app=Flask(__name__)
 def home():
 	return render_template('home.html')
 	
-@app.route('/view_all')
+@app.route('/view_all_availble')
 def view_all():
 	db = init_db()
 	all_scooters = convert_db_to_dictlist(db)
@@ -30,13 +30,16 @@ def search():
 		distance = distance((scooter.lat, scooter.lng), (search_lat, search_lng)).m
 		if distance <= search_radius and not scooter.is_reserved:
 			# this scooter is available and within the search area
-			search_results.append({'id':scooter.id, 'lat':scooter.lat, 'lng':scooter.lng})
+			search_results.append({	'id':scooter.id, 
+									'lat':scooter.lat, 
+									'lng':scooter.lng
+								  })
 			
 	return json.dumps(search_results)	# return json-ified search results list
 
 	
 # Start a reservation 
-@app.route('/reservation/start', methods=['POST'])
+@app.route('/reservation/start', methods=['GET'])
 def start_reservation():
 	reserve_id = request.args['id']	# parse request for id of scooter to be reserved
 	# TODO: put in documentation that this will raise a werkzeug.exceptions.BadRequestKeyError exception if the args are not there
@@ -47,46 +50,67 @@ def start_reservation():
 		scooter_to_reserve = next(scooter for scooter in db if scooter.id = reserve_id)	# get the scooter whose id matches the desired reserve_id
 	except StopIteration:
 		# no scooter with the reserve id was found
-		response_dict = {
-							'outcome':False,
+		response_dict = {	'result':False,
 						 	'msg':f'No scooter with id {reserve_id} was found.'
 						}
-		return json.dumps(response_dict)	# the reservation attempt failed
 	
 	# reserve if possible
 	if not scooter_to_reserve.is_reserved:
 		# scooter can be reserved
 		scooter_to_reserve.is_reserved = True
-		response_dict = {
-							'outcome':True,
+		response_dict = {	'result':True,
 						 	'msg':f'Scooter {reserve_id} was reserved successfully.'
 						}
-		return json.dumps(response_dict)	# the reservation attempt succeeded
-	
+	else:
+		# the scooter is already reserved
+		response_dict = {	'result':False,
+						 	'msg':f'Scooter with id {reserve_id} is already reserved.'
+						}
+			
+	return json.dumps(response_dict)	# return response dict
 
 
 # End a reservation
 @app.route('/reservations/end', methods=['GET'])
 def end_reservation():
-	id = request.args['id']
-	# TODO: try to end a reservation
-	
-	# TODO: put in documentation that this will raise a werkzeug.exceptions.BadRequestKeyError exception if the 'id' arg is not there
-	
-	if success:
-		# TODO: calculate distance
+	scooter_id_to_end = request.args['id']	# parse request for id of scooter whose reservation to be ended
+	# TODO: put in documentation that this will raise a werkzeug.exceptions.BadRequestKeyError exception if the args are not there
+	db = init_db()
+		
+	# find the scooter with specified id
+	try:
+		scooter_to_end_reserve = next(scooter for scooter in db if scooter.id = scooter_id_to_end)	# get the scooter whose id matches the desired scooter_id_to_end
+	except StopIteration:
+		# no scooter with the id was found
+		response_dict = {	'result':False,
+						 	'msg':f'No scooter with id {scooter_id_to_end} was found.'
+						}
+		
+	# reserve if possible
+	if scooter_to_reserve.is_reserved:
+		# scooter is reserved and can be ended
+		scooter_to_reserve.is_reserved = False
 		# redirect to payment page
 		return redirect(url_for('pay', id=))
 	else:
-		return render_template('res_end_failure.html')
+		# the scooter is not currently reserved
+		response_dict = {	'result':False,
+						 	'msg':f'No reservation for scooter {scooter_id_to_end} presently exists.'
+						}
+	
+	return json.dumps(response_dict)	# return response dict
 	
 			
 # Pay for a completed reservation
 @app.route('/reservation/pay', methods=['GET'])
 def pay():
 	# TODO: implement mock payments process
-	return txn_id
-		
+	response_dict = {	'result':True,
+					 	'msg':f'Reservation for scooter {scooter_id_to_end} was ended successfully.',
+						'txn_id':txn_id
+					}
+	
+	return json.dumps(response_dict)	# return response dict	
 		
 		
 def init_db():
@@ -95,7 +119,11 @@ def init_db():
 	# populate Scooter objects for easier access later
 	db = []
 	for scooter in db_list:
-		scooter_obj = Scooter(scooter['id'], scooter['lat'], scooter['lng'], scooter['is_reserved'])
+		scooter_obj = Scooter(	scooter['id'], 
+								scooter['lat'], 
+								scooter['lng'], 
+								scooter['is_reserved']
+							 )
 		db.append(scooter_obj)
 	return db
 	
@@ -116,7 +144,11 @@ class Scooter:
 		self.is_reserved = is_reserved
 	
 	def to_dict(self):
-		return {'id':self.id, 'lat':self.lat, 'lng':self.lng, 'is_reserved':self.is_reserved}
+		return {	'id':self.id, 
+					'lat':self.lat, 
+					'lng':self.lng, 
+					'is_reserved':self.is_reserved
+			   }
 		
 def convert_db_to_dictlist(db):
 	db_list = []
