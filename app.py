@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request
 from geopy.distance import distance
+import json
 
 app=Flask(__name__)
 
@@ -8,10 +9,11 @@ app=Flask(__name__)
 def home():
 	return render_template('home.html')
 	
-@app.route('/view_all_availble')
-def view_all():
+@app.route('/view_all_available')
+def view_all_available():
 	db = init_db()
-	all_scooters = convert_db_to_dictlist(db)
+	available_scooters = [scooter for scooter in db if not scooter.is_reserved]
+	available_scooters_dictlist = convert_db_to_dictlist(available_scooters)
 	return json.dumps(all_scooters)	# return a json-ified list of all the scooters
 
 
@@ -116,9 +118,9 @@ def pay():
 		distance_ridden = distance(old_location, new_location).m
 		distance_ridden = round(distance_ridden)
 		# calculate cost (currently a dummy function that returns the distance as the cost)
-		cost = calculate_cost(distance_ridden)	# returns distance for now
+		cost = calculate_cost(distance_ridden)	# returns cost = distance for now
 		# call the payment function (currently a dummy function that returns a hypothetical transaction id)
-		payment_response = make_payment(cost)	# returns hypothetical txn id for now
+		payment_response = make_payment(cost)	# returns hypothetical success and txn id for now
 		if payment_response['result']:
 			# the transaction was successful
 			txn_id = payment_response['txn_id']
@@ -127,7 +129,7 @@ def pay():
 			write_db(db)
 			# construct successful response
 			response_dict = {	'result':True,
-							 	'msg':f'Reservation for scooter {scooter_id_to_end} was ended successfully.',
+							 	'msg':f'Payment for scooter {scooter_id_to_end} was made successfully.',
 								'txn_id':txn_id
 							}
 		else:
@@ -166,7 +168,7 @@ def init_db():
 def get_scooter_with_id(search_id):
 	db = init_db()
 	try:
-		scooter = next(scooter for scooter in db if scooter.id = search_id)	# get the scooter with specified id
+		scooter = next(scooter for scooter in db if scooter.id == search_id)	# get the scooter with specified id
 		return scooter
 	except StopIteration:
 		# no scooter with the id was found
@@ -211,4 +213,10 @@ def make_payment(cost):
 	return {	'result':True,
 				'msg':'Your payment was made successfully.',
 				'txn_id':'379892831'			
-		   }	
+		   }
+		
+
+
+if __name__== "__main__":
+	# TODO: Turn debug flag off
+	app.run('localhost', 8080, debug=True)
