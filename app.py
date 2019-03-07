@@ -1,5 +1,5 @@
-from flask import Flask, render_template, request
-from geopy.distance import distance
+from flask import Flask, render_template, request, redirect, url_for
+from geopy.distance import distance as geodesic
 import json
 
 app=Flask(__name__)
@@ -7,28 +7,31 @@ app=Flask(__name__)
 # root
 @app.route('/')
 def home():
-	return render_template('home.html')
+	return redirect(url_for('view_all_available'))
 	
 @app.route('/view_all_available')
 def view_all_available():
 	db = init_db()
 	available_scooters = [scooter for scooter in db if not scooter.is_reserved]
 	available_scooters_dictlist = convert_db_to_dictlist(available_scooters)
-	return json.dumps(all_scooters)	# return a json-ified list of all the scooters
+	return json.dumps(available_scooters_dictlist)	# return a json-ified list of all the scooters
 
 
 # Search for scooters
 @app.route('/search', methods=['GET'])
 def search():
 	# Search for scooters in the database
-	search_lat, search_lng, search_radius = request.args['lat'], request.args['lng'], request.args['radius']	# parse request for search criteria
+	search_lat, search_lng, search_radius = \
+		float(request.args['lat']), \
+		float(request.args['lng']), \
+		float(request.args['radius'])	# parse request for search criteria
 	# TODO: put in documentation that this will raise a werkzeug.exceptions.BadRequestKeyError exception if the args are not there
 	
 	db = init_db()	# initialize db
 	search_results = []
 	for scooter in db:
 		# Calculate distance between the scooter location point and the search location point, in metres
-		distance = distance((scooter.lat, scooter.lng), (search_lat, search_lng)).m
+		distance = geodesic((scooter.lat, scooter.lng), (search_lat, search_lng)).m
 		if distance <= search_radius and not scooter.is_reserved:
 			# this scooter is available and within the search area
 			search_results.append({	'id':scooter.id, 
@@ -47,12 +50,12 @@ def start_reservation():
 	db = init_db()
 	
 	# try and find the scooter with specified id
-	scooter = get_scooter_with_id(reserve_id)
+	scooter = get_scooter_with_id(reserve_id, db)
 	if scooter:
 		# reserve if possible
-		if not scooter_to_reserve.is_reserved:
+		if not scooter.is_reserved:
 			# scooter can be reserved
-			scooter_to_reserve.is_reserved = True
+			scooter.is_reserved = True
 			write_db(db)	# update db
 			response_dict = {	'result':True,
 							 	'msg':f'Scooter {reserve_id} was reserved successfully.'
@@ -72,20 +75,22 @@ def start_reservation():
 
 
 # End a reservation
-@app.route('/reservations/end', methods=['GET'])
+@app.route('/reservation/end', methods=['GET'])
 def end_reservation():
 	scooter_id_to_end = request.args['id']	# parse request for id of scooter whose reservation to be ended
-	end_lat, end_lng = request.args['lat'], request.args['lng']
+	end_lat, end_lng = \
+		float(request.args['lat']), \
+		float(request.args['lng'])
 	# TODO: put in documentation that this will raise a werkzeug.exceptions.BadRequestKeyError exception if the args are not there
 	db = init_db()
 		
 	# try and find the scooter with specified id
-	scooter = get_scooter_with_id(scooter_id_to_end)
+	scooter = get_scooter_with_id(scooter_id_to_end, db)
 	if scooter:
-		# reserve if possible
-		if scooter_to_reserve.is_reserved:
+		# end reservation if possible
+		if scooter.is_reserved:
 			# scooter is reserved and can be ended
-			scooter_to_reserve.is_reserved = False
+			scooter.is_reserved = False
 			write_db(db)	# update db
 			# redirect to payment page
 			return redirect(url_for('pay', id=scooter_id_to_end, lat=end_lat, lng=end_lng))
@@ -106,16 +111,21 @@ def end_reservation():
 # Pay for a completed reservation
 @app.route('/reservation/pay', methods=['GET'])
 def pay():
-	scooter_id, end_lat, end_lng = request.args['id'], request.args['lat'], request.args['lng']	# parse request for end-reservation details
+	scooter_id, end_lat, end_lng = \
+		request.args['id'], \
+		float(request.args['lat']), \
+		float(request.args['lng'])	# parse request for end-reservation details
 	# TODO: put in documentation that this will raise a werkzeug.exceptions.BadRequestKeyError exception if the args are not there
+	
 	# try and find the scooter with specified id
-	scooter = get_scooter_with_id(scooter_id)
+	db = init_db()
+	scooter = get_scooter_with_id(scooter_id, db)
 	if scooter:
 		# construct location point tuples
 		old_location = (scooter.lat, scooter.lng)
 		new_location = (end_lat, end_lng)
 		# calculate distance between points, in metres
-		distance_ridden = distance(old_location, new_location).m
+		distance_ridden = geodesic(old_location, new_location).m
 		distance_ridden = round(distance_ridden)
 		# calculate cost (currently a dummy function that returns the distance as the cost)
 		cost = calculate_cost(distance_ridden)	# returns cost = distance for now
@@ -129,7 +139,7 @@ def pay():
 			write_db(db)
 			# construct successful response
 			response_dict = {	'result':True,
-							 	'msg':f'Payment for scooter {scooter_id_to_end} was made successfully.',
+							 	'msg':f'Payment for scooter {scooter_id} was made successfully.',
 								'txn_id':txn_id
 							}
 		else:
@@ -140,7 +150,7 @@ def pay():
 	else:
 		# no scooter with the id was found
 		response_dict = {	'result':False,
-						 	'msg':f'No scooter with id {scooter_id_to_end} was found.'
+						 	'msg':f'No scooter with id {scooter} was found.'
 						}
 	
 	return json.dumps(response_dict)	# return response dict	
@@ -165,8 +175,7 @@ def init_db():
 	return db
 	
 	
-def get_scooter_with_id(search_id):
-	db = init_db()
+def get_scooter_with_id(search_id, db):
 	try:
 		scooter = next(scooter for scooter in db if scooter.id == search_id)	# get the scooter with specified id
 		return scooter
@@ -174,7 +183,7 @@ def get_scooter_with_id(search_id):
 		# no scooter with the id was found
 		return None
 	
-		
+
 def write_db(db):
 	# serialize Scooter objects 
 	db_list = convert_db_to_dictlist(db)
@@ -200,7 +209,7 @@ class Scooter:
 def convert_db_to_dictlist(db):
 	db_list = []
 	for scooter in db:
-		db_list.append(scooter.to_dict)
+		db_list.append(scooter.to_dict())
 	return db_list
 	
 
