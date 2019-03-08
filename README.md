@@ -4,15 +4,13 @@
 
 ### Stack
 
-The implementation of this app uses Python/Flask, with JSON as the database. Other frameworks used are:
-
-* 'requests' framework for getting the body of requests
-* 'geopy' library for accurately calculating the “crow flies” distance between two lat/lng points
+The implementation of this app uses Python/Flask, with JSON as the database. The 'geopy' library was used for accurately calculating the “crow flies” distance between two sets of coordinates. 
 
 ### Setup
 
 * Clone the repository
 * Run `python3 app.py`
+* App will run on `http://localhost:8080/`
 
 ## API Endpoints
 
@@ -30,13 +28,13 @@ None
 
 #### Returns:
 
-JSON string, with the following parameters:
+JSON list of dicts, with each dict exhibiting the following structure:
 
-|  Parameter  | Original Data Type |                                         Description                                         |
+|     Key     | Value's Original Data Type |                                      Value Description                                      |
 |:-----------:|:------------------:|:-------------------------------------------------------------------------------------------:|
-|      id     |       string       | The id of the scooter. This can be used to start and end reservations (see below).          |
-|     lat     |   floating point   | Latitude coordinate of the current location of the scooter.                                 |
-|     lng     |   floating point   | Longitude coordinate of the current location of the scooter.                                |
+|      id     |       string       |      The id of the scooter. This can be used to start and end reservations (see below).     |
+|     lat     |   floating point   |                 Latitude coordinate of the current location of the scooter.                 |
+|     lng     |   floating point   |                 Longitude coordinate of the current location of the scooter.                |
 | is_reserved |       boolean      | Whether or not the scooter is currently reserved. Only unreserved scooters can be reserved. |
 
 ### Search for Scooters
@@ -56,13 +54,13 @@ GET /search
 
 #### Returns:
 
-JSON string, with the following parameters:
+JSON list of dicts, with each dict exhibiting the following structure:
 
-| Parameter |   Original Data Type   |                                                          Description                                                          |
-|:---------:|:----------------------:|:-----------------------------------------------------------------------------------------------------------------------------:|
-|    lat    |     floating point     | Latitude coordinate of the desired location at which to reserve a scooter.                                                    |
-|    lng    |     floating point     | Longitude coordinate of the desired location at which to reserve a scooter.                                                   |
-|   radius  | integer/floating point | The radius of the search, i.e. The radius of the area around the desired location that is acceptable for reserving a scooter. |
+| Key | Value's Original Data Type |                                  Value Description                                 |
+|:---:|:------------------:|:----------------------------------------------------------------------------------:|
+|  id |       string       | The id of the scooter. This can be used to start and end reservations (see below). |
+| lat |   floating point   |             Latitude coordinate of the current location of the scooter.            |
+| lng |   floating point   |            Longitude coordinate of the current location of the scooter.            |
 
 
 #### Throws (list of errors thrown by foreseeable mistakes):
