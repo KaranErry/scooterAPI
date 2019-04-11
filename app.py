@@ -1,6 +1,7 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, make_response
 from geopy.distance import distance as geodesic
-import json
+import json, werkzeug
+from http import HTTPStatus
 
 app=Flask(__name__)
 
@@ -14,19 +15,28 @@ def view_all_available():
 	db = init_db()
 	available_scooters = [scooter for scooter in db if not scooter.is_reserved]
 	available_scooters_dictlist = convert_db_to_dictlist(available_scooters)
-	return json.dumps(available_scooters_dictlist)	# return a json-ified list of all the scooters
+	return json.dumps(available_scooters_dictlist), HTTPStatus.OK.value, {'Content-Type':'application/json'}	# return a json-ified list of all the scooters with status 200
 
 
 # Search for scooters
 @app.route('/search', methods=['GET'])
 def search():
 	# Search for scooters in the database
-	search_lat, search_lng, search_radius = \
-		float(request.args['lat']), \
-		float(request.args['lng']), \
-		float(request.args['radius'])	# parse request for search criteria
+	try:
+		search_lat, search_lng, search_radius = \
+			float(request.args['lat']), \
+			float(request.args['lng']), \
+			float(request.args['radius'])	# parse request for search criteria
+	except werkzeug.exceptions.BadRequestKeyError:
+		# the required parameters are not present in the search query
+		error = { 'msg': 'Error 422 - Please include all required parameters in search query' }
+		return json.dumps(error), HTTPStatus.UNPROCESSABLE_ENTITY.value, {'Content-Type':'application/json'}	# respond with status 422
+	except ValueError:
+		error = { 'msg': 'Error 422 - Lat/Lng values must be numbers' }
+		return json.dumps(error), HTTPStatus.UNPROCESSABLE_ENTITY.value, {'Content-Type':'application/json'}	# respond with status 422
 	
 	db = init_db()	# initialize db
+
 	search_results = []
 	for scooter in db:
 		# Calculate distance between the scooter location point and the search location point, in metres
@@ -38,13 +48,20 @@ def search():
 									'lng':scooter.lng
 								  })
 			
-	return json.dumps(search_results)	# return json-ified search results list
+	return json.dumps(search_results), HTTPStatus.OK.value, {'Content-Type':'application/json'}	# return json-ified search results list with status 200
 
 	
 # Start a reservation 
 @app.route('/reservation/start', methods=['GET'])
 def start_reservation():
-	reserve_id = request.args['id']	# parse request for id of scooter to be reserved
+	# reserve_id = request.form['id'] # for POST request
+	try:
+		reserve_id = request.args['id']	# parse request for id of scooter to be reserved
+	except werkzeug.exceptions.BadRequestKeyError:
+		# the required parameters are not present in the search query
+		error = { 'msg': 'Error 422 - Please include all required parameters in search query' }
+		return json.dumps(error), HTTPStatus.UNPROCESSABLE_ENTITY.value, {'Content-Type':'application/json'}	# respond with status 422
+
 	db = init_db()
 	
 	# try and find the scooter with specified id
@@ -55,31 +72,35 @@ def start_reservation():
 			# scooter can be reserved
 			scooter.is_reserved = True
 			write_db(db)	# update db
-			response_dict = {	'result':True,
-							 	'msg':f'Scooter {reserve_id} was reserved successfully.'
-							}
+			success = { 'msg': f'Scooter {reserve_id} was reserved successfully.' }
+			return json.dumps(success), HTTPStatus.OK.value, {'Content-Type':'application/json'}	# respond with status 200
+
 		else:
 			# the scooter is already reserved
-			response_dict = {	'result':False,
-							 	'msg':f'Scooter with id {reserve_id} is already reserved.'
-							}
+			error = { 'msg': f'Error 422 - Scooter with id {reserve_id} is already reserved.' }
+			return json.dumps(error), HTTPStatus.UNPROCESSABLE_ENTITY.value, {'Content-Type':'application/json'}	# respond with status 422
 	else:
 		# no scooter with the reserve id was found
-		response_dict = {	'result':False,
-						 	'msg':f'No scooter with id {reserve_id} was found.'
-						}
-	
-	return json.dumps(response_dict)	# return response dict
+		error = { 'msg': f'Error 422 - No scooter with id {reserve_id} was found.' }
+		return json.dumps(error), HTTPStatus.UNPROCESSABLE_ENTITY.value, {'Content-Type':'application/json'}	# respond with status 422
 
 
 # End a reservation
 @app.route('/reservation/end', methods=['GET'])
 def end_reservation():
-	scooter_id_to_end = request.args['id']	# parse request for id of scooter whose reservation to be ended
-	end_lat, end_lng = \
-		float(request.args['lat']), \
-		float(request.args['lng'])
-	db = init_db()
+	try:
+		scooter_id_to_end = request.args['id']	# parse request for id of scooter whose reservation to be ended
+		end_lat, end_lng = \
+			float(request.args['lat']), \
+			float(request.args['lng'])
+		db = init_db()
+	except werkzeug.exceptions.BadRequestKeyError:
+		# the required parameters are not present in the search query
+		error = { 'msg': 'Error 422 - Please include all required parameters in search query' }
+		return json.dumps(error), HTTPStatus.UNPROCESSABLE_ENTITY.value, {'Content-Type':'application/json'}	# respond with status 422
+	except ValueError:
+		error = { 'msg': 'Error 422 - Lat/Lng values must be numbers' }
+		return json.dumps(error), HTTPStatus.UNPROCESSABLE_ENTITY.value, {'Content-Type':'application/json'}	# respond with status 422
 		
 	# try and find the scooter with specified id
 	scooter = get_scooter_with_id(scooter_id_to_end, db)
@@ -93,25 +114,29 @@ def end_reservation():
 			return redirect(url_for('pay', id=scooter_id_to_end, lat=end_lat, lng=end_lng))
 		else:
 			# the scooter is not currently reserved
-			response_dict = {	'result':False,
-							 	'msg':f'No reservation for scooter {scooter_id_to_end} presently exists.'
-							}
+			error = { 'msg': f'Error 422 - No reservation for scooter {scooter_id_to_end} presently exists.' }
+			return json.dumps(error), HTTPStatus.UNPROCESSABLE_ENTITY.value, {'Content-Type':'application/json'}	# respond with status 422
 	else:
 		# no scooter with the id was found
-		response_dict = {	'result':False,
-						 	'msg':f'No scooter with id {scooter_id_to_end} was found.'
-						}
-	
-	return json.dumps(response_dict)	# return response dict
+		error = { 'msg': f'Error 422 - No scooter with id {scooter_id_to_end} was found.' }
+		return json.dumps(error), HTTPStatus.UNPROCESSABLE_ENTITY.value, {'Content-Type':'application/json'}	# respond with status 422
 	
 			
 # Pay for a completed reservation
 @app.route('/reservation/pay', methods=['GET'])
 def pay():
-	scooter_id, end_lat, end_lng = \
-		request.args['id'], \
-		float(request.args['lat']), \
-		float(request.args['lng'])	# parse request for end-reservation details
+	try:
+		scooter_id, end_lat, end_lng = \
+			request.args['id'], \
+			float(request.args['lat']), \
+			float(request.args['lng'])	# parse request for end-reservation details
+	except werkzeug.exceptions.BadRequestKeyError:
+		# the required parameters are not present in the search query
+		error = { 'msg': 'Error 422 - Please include all required parameters in search query' }
+		return json.dumps(error), HTTPStatus.UNPROCESSABLE_ENTITY.value, {'Content-Type':'application/json'}	# respond with status 422
+	except ValueError:
+		error = { 'msg': 'Error 422 - Lat/Lng values must be numbers' }
+		return json.dumps(error), HTTPStatus.UNPROCESSABLE_ENTITY.value, {'Content-Type':'application/json'}	# respond with status 422
 	
 	# try and find the scooter with specified id
 	db = init_db()
@@ -140,18 +165,16 @@ def pay():
 							}
 		else:
 			# there was a problem with the transaction
-			response_dict = {	'result':False,
-							 	'msg':payment_response['msg']
-							}
+			error = { 'msg': f"Error 422 - {payment_response['msg']}" }
+			return json.dumps(error), 404, {'ContentType':'application/json'} 
 	else:
 		# no scooter with the id was found
-		response_dict = {	'result':False,
-						 	'msg':f'No scooter with id {scooter_id} was found.'
-						}
+		error = { 'msg': f'Error 422 - No scooter with id {scooter_id} was found.' }
+		return json.dumps(error), HTTPStatus.UNPROCESSABLE_ENTITY.value, {'Content-Type':'application/json'}	# respond with status 422
 	
-	return json.dumps(response_dict)	# return response dict	
-		
-	
+	return json.dumps(response_dict), HTTPStatus.OK.value, {'Content-Type':'application/json'}	# return response dict
+
+
 # ==================
 #  HELPER FUNCTIONS	
 # ==================
@@ -224,4 +247,4 @@ def make_payment(cost):
 
 if __name__== "__main__":
 	# TODO: Turn debug flag off for production system
-	app.run('localhost', 8080, debug=True)
+	app.run('localhost', 8080)
