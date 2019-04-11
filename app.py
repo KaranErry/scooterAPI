@@ -22,6 +22,7 @@ def view_all_available():
 @app.route('/search', methods=['GET'])
 def search():
 	# Search for scooters in the database
+	# parse request params
 	try:
 		search_lat, search_lng, search_radius = \
 			float(request.args['lat']), \
@@ -33,6 +34,14 @@ def search():
 		return json.dumps(error), HTTPStatus.UNPROCESSABLE_ENTITY.value, {'Content-Type':'application/json'}	# respond with status 422
 	except ValueError:
 		error = { 'msg': 'Error 422 - Lat/Lng values must be numbers' }
+		return json.dumps(error), HTTPStatus.UNPROCESSABLE_ENTITY.value, {'Content-Type':'application/json'}	# respond with status 422
+
+	# validate lat and long values
+	if not -90 <= search_lat <= 90:
+		error = { 'msg': 'Error 422 - Latitude must be in the [-90, 90] range.'}
+		return json.dumps(error), HTTPStatus.UNPROCESSABLE_ENTITY.value, {'Content-Type':'application/json'}	# respond with status 422
+	if not -180 <= search_lng <= 180:
+		error = { 'msg': 'Error 422 - Longitude must be in the [-180, 180] range.'}
 		return json.dumps(error), HTTPStatus.UNPROCESSABLE_ENTITY.value, {'Content-Type':'application/json'}	# respond with status 422
 	
 	db = init_db()	# initialize db
@@ -54,7 +63,7 @@ def search():
 # Start a reservation 
 @app.route('/reservation/start', methods=['GET'])
 def start_reservation():
-	# reserve_id = request.form['id'] # for POST request
+	# parse request params
 	try:
 		reserve_id = request.args['id']	# parse request for id of scooter to be reserved
 	except werkzeug.exceptions.BadRequestKeyError:
@@ -88,6 +97,7 @@ def start_reservation():
 # End a reservation
 @app.route('/reservation/end', methods=['GET'])
 def end_reservation():
+	# parse request params
 	try:
 		scooter_id_to_end = request.args['id']	# parse request for id of scooter whose reservation to be ended
 		end_lat, end_lng = \
@@ -100,6 +110,14 @@ def end_reservation():
 		return json.dumps(error), HTTPStatus.UNPROCESSABLE_ENTITY.value, {'Content-Type':'application/json'}	# respond with status 422
 	except ValueError:
 		error = { 'msg': 'Error 422 - Lat/Lng values must be numbers' }
+		return json.dumps(error), HTTPStatus.UNPROCESSABLE_ENTITY.value, {'Content-Type':'application/json'}	# respond with status 422
+
+	# validate lat and long values
+	if not -90 <= end_lat <= 90:
+		error = { 'msg': 'Error 422 - Latitude must be in the [-90, 90] range.'}
+		return json.dumps(error), HTTPStatus.UNPROCESSABLE_ENTITY.value, {'Content-Type':'application/json'}	# respond with status 422
+	if not -180 <= end_lng <= 180:
+		error = { 'msg': 'Error 422 - Longitude must be in the [-180, 180] range.'}
 		return json.dumps(error), HTTPStatus.UNPROCESSABLE_ENTITY.value, {'Content-Type':'application/json'}	# respond with status 422
 		
 	# try and find the scooter with specified id
