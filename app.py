@@ -108,10 +108,26 @@ def end_reservation():
 		# end reservation if possible
 		if scooter.is_reserved:
 			# scooter is reserved and can be ended
-			scooter.is_reserved = False
-			write_db(db)	# update db
-			# redirect to payment page
-			return redirect(url_for('pay', id=scooter_id_to_end, lat=end_lat, lng=end_lng))
+			
+			# initiate payment
+			payment_response = pay(scooter, end_lat, end_lng)
+			if payment_response['status']:
+				# the payment was completed successfully
+				
+				# update scooter's reserved status and location
+				scooter.is_reserved = False
+				scooter.lat, scooter.lng = end_lat, end_lng
+				write_db(db)
+				# construct successful response
+				success =	{	'msg': f'Payment for scooter {scooter_id_to_end} was made successfully and the reservation was ended.',
+								'txn_id': payment_response['txn_id']
+							}
+				return json.dumps(success), HTTPStatus.OK.value, {'Content-Type':'application/json'}	# respond with status 200
+			else:
+				# the payment failed for some reason
+				error = { 'msg': payment_response['msg'] }
+				response_code = payment_response['code']
+				return json.dumps(error), response_code, {'Content-Type':'application/json'}
 		else:
 			# the scooter is not currently reserved
 			error = { 'msg': f'Error 422 - No reservation for scooter {scooter_id_to_end} presently exists.' }
@@ -120,64 +136,37 @@ def end_reservation():
 		# no scooter with the id was found
 		error = { 'msg': f'Error 422 - No scooter with id {scooter_id_to_end} was found.' }
 		return json.dumps(error), HTTPStatus.UNPROCESSABLE_ENTITY.value, {'Content-Type':'application/json'}	# respond with status 422
-	
-			
-# Pay for a completed reservation
-@app.route('/reservation/pay', methods=['GET'])
-def pay():
-	try:
-		scooter_id, end_lat, end_lng = \
-			request.args['id'], \
-			float(request.args['lat']), \
-			float(request.args['lng'])	# parse request for end-reservation details
-	except werkzeug.exceptions.BadRequestKeyError:
-		# the required parameters are not present in the search query
-		error = { 'msg': 'Error 422 - Please include all required parameters in search query' }
-		return json.dumps(error), HTTPStatus.UNPROCESSABLE_ENTITY.value, {'Content-Type':'application/json'}	# respond with status 422
-	except ValueError:
-		error = { 'msg': 'Error 422 - Lat/Lng values must be numbers' }
-		return json.dumps(error), HTTPStatus.UNPROCESSABLE_ENTITY.value, {'Content-Type':'application/json'}	# respond with status 422
-	
-	# try and find the scooter with specified id
-	db = init_db()
-	scooter = get_scooter_with_id(scooter_id, db)
-	if scooter:
-		# construct location point tuples
-		old_location = (scooter.lat, scooter.lng)
-		new_location = (end_lat, end_lng)
-		# calculate distance between points, in metres
-		distance_ridden = geodesic(old_location, new_location).m
-		distance_ridden = round(distance_ridden)
-		# calculate cost (currently a dummy function that returns the distance as the cost)
-		cost = calculate_cost(distance_ridden)	# returns cost = distance for now
-		# call the payment function (currently a dummy function that returns a hypothetical transaction id)
-		payment_response = make_payment(cost)	# returns hypothetical success and txn id for now
-		if payment_response['result']:
-			# the transaction was successful
-			txn_id = payment_response['txn_id']
-			# update scooter's location
-			scooter.lat, scooter.lng = end_lat, end_lng
-			write_db(db)
-			# construct successful response
-			response_dict = {	'result':True,
-							 	'msg':f'Payment for scooter {scooter_id} was made successfully.',
-								'txn_id':txn_id
-							}
-		else:
-			# there was a problem with the transaction
-			error = { 'msg': f"Error 422 - {payment_response['msg']}" }
-			return json.dumps(error), 404, {'ContentType':'application/json'} 
-	else:
-		# no scooter with the id was found
-		error = { 'msg': f'Error 422 - No scooter with id {scooter_id} was found.' }
-		return json.dumps(error), HTTPStatus.UNPROCESSABLE_ENTITY.value, {'Content-Type':'application/json'}	# respond with status 422
-	
-	return json.dumps(response_dict), HTTPStatus.OK.value, {'Content-Type':'application/json'}	# return response dict
 
 
 # ==================
 #  HELPER FUNCTIONS	
 # ==================
+
+
+def pay(scooter, end_lat, end_lng):
+	# Initialise the payment process
+	# construct location point tuples
+	old_location = (scooter.lat, scooter.lng)
+	new_location = (end_lat, end_lng)
+	# calculate distance between points, in metres
+	distance_ridden = geodesic(old_location, new_location).m
+	distance_ridden = round(distance_ridden)
+	# calculate cost (currently a dummy function that returns the distance as the cost)
+	cost = calculate_cost(distance_ridden)	# returns cost = distance for now
+	# redirect to payment gateway and return response (currently a dummy function that returns a hypothetical transaction id)
+	return payment_gateway(cost)	# returns hypothetical success and txn id for now
+	
+def payment_gateway(cost):
+	# TODO: Implement real payment processing in future
+	txn_id = 379892831
+	return 	{	'status': True,
+				'txn_id': txn_id
+			}
+
+def calculate_cost(distance):
+	# TODO: Implement meaningful cost calculation in future
+	return distance
+
 		
 def init_db():
 	db_json = open('scooter_db.json', 'r').read()
@@ -230,18 +219,6 @@ def convert_db_to_dictlist(db):
 	for scooter in db:
 		db_list.append(scooter.to_dict())
 	return db_list
-	
-
-def calculate_cost(distance):
-	# TODO: Implement meaningful cost calculation in future
-	return distance
-	
-def make_payment(cost):
-	# TODO: Implement real payment processing in future
-	return {	'result':True,
-				'msg':'Your payment was made successfully.',
-				'txn_id':'379892831'			
-		   }
 		
 
 
