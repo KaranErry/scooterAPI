@@ -1,150 +1,143 @@
-# Personal Transport API
+# Personal Transport API (Bike Rentals – Sprint 1, Flask)
 
-## Introduction
+A lightweight REST API for a **Bike Rental** service.
 
-### Stack
+**Sprint 1 goal:** rename, clean up, and ship a working MVP using **Flask** — fast, focused, and demo-ready.
 
-The implementation of this app uses Python/Flask, with JSON as the database. The 'geopy' library was used for accurately calculating the “crow flies” distance between two sets of coordinates. 
+> Why Flask first? Sprint 1 is about momentum, not perfection. We’ll migrate to FastAPI in a future sprint once the MVP is alive.
 
-### Setup
+---
 
-#### On the web
+## Features (Sprint 1 scope)
+- Basic **CRUD** for bikes and rentals (MVP endpoints)
+- Clear repo workflow (Issues → Branches → PRs → Merge)
+- Strict branch naming with CI guardrail
+- Project board: **To Do → In Progress → Done** (manual column moves)
 
-The API is live at https://scooter-reservation.herokuapp.com
+**Planned (Sprint 2+)**
+- Migrate to **FastAPI** (auto-docs, async)
+- AuthN/AuthZ
+- Payments integration
+- Inventory/availability logic
+- Test suite + CI
 
-#### On local dev environment
+---
 
-* Clone the repository
-* Run `python3 app.py`
-* App will run on http://localhost:8080
+## Tech Stack
+- **Python** 3.10+
+- **Flask** (Sprint 1)
+- **JSON REST**
+- **GitHub** Projects + Actions
 
-## 🧭 Dev Workflow
+---
 
-- Create an **Issue**
-- Create a **branch** from that issue:
-  `feature/issue-#/short-name`, `bugfix/issue-#/short-name`, or `chore/issue-#/short-name`
-- Open a **PR** with `Closes #<issue number>`
-- Merge when checks pass — the issue closes automatically
-- The Project board reflects status (To Do → In Progress → Done)
+## Getting Started (Intern-Friendly)
 
+> If this is your first rodeo, follow these steps exactly — then break stuff *intentionally* once it runs. 😄
 
-## API Endpoints
+### 1) Clone
+```bash
+git clone https://github.com/MelEUsher/PersonalTransportAPI.git
+cd PersonalTransportAPI
 
-### View All Available Scooters
+### 2) Create & activate a virtual environment
+macOS/Linux:
+python3 -m venv .venv
+source .venv/bin/activate
 
-#### Endpoints:
-```
-GET /
-GET /view_all_available
-```
+### 3) Install dependencies
+If requirements.txt exists:
+pip install -r requirements.txt
 
-#### Parameters: 
+### 4) Run the app (preferred)
+python app.py
 
-None
+#### Alternative (flask run):
+# macOS/Linux
+export FLASK_APP=app.py
+flask run --port 5000
 
-#### Success Responses:
+# Windows (cmd)
+set FLASK_APP=app.py
+flask run --port 5000
 
-* **Code**: 200 <br />
-  **Content**: JSON list of objects, with each object containing the following properties:
+# Windows (PowerShell)
+$Env:FLASK_APP="app.py"
+flask run --port 5000
 
-|     Key     | Data Type |                                      Description of Value                                      |
-|:-----------:|:------------------:|:-------------------------------------------------------------------------------------------:|
-|      id     |       string       |      The id of the scooter. This can be used to start and end reservations (see below).     |
-|     lat     |   floating point   |                 Latitude coordinate of the current location of the scooter.                 |
-|     lng     |   floating point   |                 Longitude coordinate of the current location of the scooter.                |
-| is_reserved |       boolean      | Whether or not the scooter is currently reserved. Only unreserved scooters can be reserved. |
+Visit: http://localhost:5000
 
+## Project Structure
+PersonalTransportAPI/
+├─ .github/
+│  ├─ ISSUE_TEMPLATE/
+│  │  └─ config.yml
+│  ├─ workflows/
+│  │  └─ branch-name-check.yml
+│  └─ pull_request_template.md
+├─ src/                    # (recommended) app code moves here later
+│  ├─ __init__.py
+│  ├─ app.py               # or at repo root initially
+│  └─ routes/              # per-feature blueprints
+├─ tests/                  # placeholder for now
+├─ requirements.txt
+├─ CONTRIBUTING.md
+└─ README.md
 
-#### Error Responses:
+## Development Workflow (read this like a cheat sheet)
+We keep it simple and professional.
 
-* **Code**: 422 <br />
-  **Content**: JSON object with a `msg` property that gives a brief description of the error trigger.
+### 1) Create an Issue
+Every task starts as an Issue (use the Task template).
+The Project board is your home base.
+### 2) Create a branch from the Issue (strict naming)
+feature/issue-<number>-short-name
+bugfix/issue-<number>-short-name
+chore/issue-<number>-short-name
 
-### Search for Scooters 
+#### Examples
+feature/issue-12-rentals-endpoint
+bugfix/issue-7-auth-timezone
+chore/issue-3-rewrite-readme
 
-#### Endpoints:
-```
-GET /search
-```
+####CLI
+git checkout master
+git pull
+git checkout -b feature/issue-12-rentals-endpoint
 
-#### Parameters:
+### 3) Do the work, commit small, push
+git add .
+git commit -m "Issue #12: implement /rentals endpoints and basic validation"
+git push -u origin feature/issue-12-rentals-endpoint
 
-| Parameter |   Data Type Expected   |                                                          Description                                                          |
-|:---------:|:----------------------:|:-----------------------------------------------------------------------------------------------------------------------------:|
-|    lat    |     floating point     | Latitude coordinate of the desired location at which to reserve a scooter.                                                    |
-|    lng    |     floating point     | Longitude coordinate of the desired location at which to reserve a scooter.                                                   |
-|   radius  | integer/floating point | The radius of the search, i.e. The radius of the area around the desired location that is acceptable for reserving a scooter. |
+### 4) Open a PR (link the Issue)
+In your PR description, add:
+Closes #<issue-number>
 
-#### Success Responses:
+GitHub auto-closes the Issue when the PR merges.
 
-* **Code**: 200 <br />
-  **Content**: JSON list of objects, with each object containing the following properties:
+### 5) Get green checks, then submit PR.
+`master` is protected: PR required, no direct pushes.
 
-| Key | Data Type |                                  Description of Value                                 |
-|:---:|:------------------:|:----------------------------------------------------------------------------------:|
-|  id |       string       | The id of the scooter. This can be used to start and end reservations (see below). |
-| lat |   floating point   |             Latitude coordinate of the current location of the scooter.            |
-| lng |   floating point   |            Longitude coordinate of the current location of the scooter.            |
+## Working With the Project Board
+New Issues auto-add to the project (based on your workflow filter).
+Move between To Do / In Progress / Done manually (expected in new GitHub Projects).
+Status automation is optional; we’re keeping it manual for simplicity.
 
+## Testing (Placeholder -- testing will be added later)
+####Expected (when added):
+pytest -q
+# or
+make test
 
-#### Error Responses:
+## Contributing
+See CONTRIBUTING.md for branch naming, Issue → Branch → PR flow, and checklist.
 
-* **Code**: 422 <br />
-  **Content**: JSON object with a `msg` property that gives a brief description of the error trigger.
+## License
+If a LICENSE file is added, it will be referenced here.
 
-
-### Reserve a Scooter
-
-#### Endpoints:
-```
-GET /reservation/start
-```
-
-#### Parameters:
-
-| Parameter | Data Type Expected |                                                       Description                                                      |
-|:---------:|:------------------:|:----------------------------------------------------------------------------------------------------------------------:|
-|     id    |       string       | The id of the scooter that is to be reserved. Go to _search_ or _view all available scooters_ to find out scooter IDs. |
-
-#### Success Responses:
-
-* **Code**: 200 <br />
-  **Content**: JSON object with a `msg` property that gives a brief description of the successful operation.
-
-
-#### Error Responses:
-
-* **Code**: 422 <br />
-  **Content**: JSON object with a `msg` property that gives a brief description of the error trigger.
-
-
-### End Reservation for a Scooter
-
-#### Endpoints:
-```
-GET /reservation/end
-```
-
-#### Parameters:
-
-| Parameter | Data Type Expected |                                                            Description                                                            |
-|:---------:|:------------------:|:---------------------------------------------------------------------------------------------------------------------------------:|
-|     id    |       string       | The id of the scooter whose reservation is to be ended. The scooter must have been reserved first in order to end a reservation.  |
-|    lat    |   floating point   | Latitude coordinate of the final location of the scooter where the trip is to be ended.                                           |
-|    lng    |   floating point   | Longitude coordinate of the final location of the scooter where the trip is to be ended.                                          |
-
-#### Success Responses:
-
-* **Code**: 200 <br />
-  **Content**: JSON object containing the following properties:
-
-| Parameter | Original Data Type |                                                                                           Description                                                                                          |
-|:---------:|:------------------:|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
-|    msg    |       string       | Short message a brief description of the successful operation                                 |
-| txn_id    | string             | The transaction ID / reference number associated with the successful payment transaction to be kept for the payee's records. |
-
-
-#### Error Responses:
-
-* **Code**: 422 <br />
-  **Content**: JSON object with a `msg` property that gives a brief description of the error trigger.
+## Project History (Background & Attribution)
+This repository began as a fork of `KaranErry/scooterAPI`.
+We are transforming it into a **Bike Rental API** with a modernized structure, clearer workflows, and a future migration to FastAPI.
+Original project: https://github.com/KaranErry/scooterAPI
+Current owner & direction: **Mel Usher** (MelEUsher/PersonalTransportAPI)
