@@ -1,4 +1,4 @@
-# Scooter Reservation API
+# Personal Transport API
 
 ## Introduction
 
@@ -17,6 +17,16 @@ The API is live at https://scooter-reservation.herokuapp.com
 * Clone the repository
 * Run `python3 app.py`
 * App will run on http://localhost:8080
+
+## 🧭 Dev Workflow
+
+- Create an **Issue**
+- Create a **branch** from that issue:
+  `feature/issue-#/short-name`, `bugfix/issue-#/short-name`, or `chore/issue-#/short-name`
+- Open a **PR** with `Closes #<issue number>`
+- Merge when checks pass — the issue closes automatically
+- The Project board reflects status (To Do → In Progress → Done)
+
 
 ## API Endpoints
 
