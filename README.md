@@ -1,20 +1,14 @@
-# Personal Transport API (Bike Rentals – Sprint 1, Flask)
+# Personal Transport API 
 
 A lightweight REST API for a **Bike Rental** service.
 
-**Sprint 1 goal:** rename, clean up, and ship a working MVP using **Flask** — fast, focused, and demo-ready.
 
-> Why Flask first? Sprint 1 is about momentum, not perfection. We’ll migrate to FastAPI in a future sprint once the MVP is alive.
-
----
-
-## Features (Sprint 1 scope)
+## Features
 - Basic **CRUD** for bikes and rentals (MVP endpoints)
 - Clear repo workflow (Issues → Branches → PRs → Merge)
-- Strict branch naming with CI guardrail
 - Project board: **To Do → In Progress → Done** (manual column moves)
 
-**Planned (Sprint 2+)**
+**Planned**
 - Migrate to **FastAPI** (auto-docs, async)
 - AuthN/AuthZ
 - Payments integration
@@ -25,7 +19,7 @@ A lightweight REST API for a **Bike Rental** service.
 
 ## Tech Stack
 - **Python** 3.10+
-- **Flask** (Sprint 1)
+- **Flask** 
 - **JSON REST**
 - **GitHub** Projects + Actions
 
@@ -33,10 +27,9 @@ A lightweight REST API for a **Bike Rental** service.
 
 ## Getting Started (Intern-Friendly)
 
-> If this is your first rodeo, follow these steps exactly — then break stuff *intentionally* once it runs. 😄
+> If this is your first rodeo, follow these steps exactly. 
 
 ### 1) Clone
-```bash
 git clone https://github.com/MelEUsher/PersonalTransportAPI.git
 cd PersonalTransportAPI
 
