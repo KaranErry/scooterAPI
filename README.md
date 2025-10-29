@@ -63,19 +63,21 @@ Visit: http://localhost:5000
 ## Project Structure
 PersonalTransportAPI/
 ├─ .github/
-│  ├─ ISSUE_TEMPLATE/
-│  │  └─ config.yml
-│  ├─ workflows/
-│  │  └─ branch-name-check.yml
-│  └─ pull_request_template.md
-├─ src/                    # (recommended) app code moves here later
-│  ├─ __init__.py
-│  ├─ app.py               # or at repo root initially
-│  └─ routes/              # per-feature blueprints
-├─ tests/                  # placeholder for now
-├─ requirements.txt
+│ ├─ ISSUE_TEMPLATE/
+│ │ ├─ config.yml
+│ │ └─ task.md
+│ ├─ workflows/
+│ │ └─ branch-name-check.yml
+│ └─ pull_request_template.md # ← move here if not already (see note)
+├─ app.py
+├─ app.json
 ├─ CONTRIBUTING.md
-└─ README.md
+├─ Procfile
+├─ README.md
+├─ requirements.txt
+├─ scooter_db.json
+└─ .gitignore
+
 
 ## Development Workflow (read this like a cheat sheet)
 We keep it simple and professional.
