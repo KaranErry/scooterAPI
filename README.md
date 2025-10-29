@@ -67,8 +67,7 @@ PersonalTransportAPI/
 │ │ ├─ config.yml
 │ │ └─ task.md
 │ ├─ workflows/
-│ │ └─ branch-name-check.yml
-│ └─ pull_request_template.md # ← move here if not already (see note)
+│ └─ pull_request_template.md
 ├─ app.py
 ├─ app.json
 ├─ CONTRIBUTING.md
