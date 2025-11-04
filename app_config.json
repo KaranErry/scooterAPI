@@ -1,0 +1,29 @@
+{
+    "app": {
+        "debug": true,
+        "host": "0.0.0.0",
+        "port": 8080,
+        "max_search_radius": 50000,
+        "default_search_radius": 2000,
+    },
+    "database": {
+        "file": "scooter_db.json",
+        "backup_enabled": true,
+        "backup_interval_hours": 12
+    }
+    "payment": {
+        "cost_per_meter": 0.02,
+        "minimum_charge": 2.50,
+        "currency": "USD"
+    },
+    "logging": {
+        "level": "DEBUG",
+        "file": "scooter_api.log",
+        "max_file_size": "50MB"
+    },
+    "features": {
+        "advanced_search": true,
+        "analytics": true,
+        "legacy_support": false,
+    }
+}
