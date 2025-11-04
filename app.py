@@ -1,9 +1,56 @@
 from flask import Flask, render_template, request, redirect, url_for, make_response
 from geopy.distance import distance as geodesic
 import json, werkzeug
+import os
 from http import HTTPStatus
 
 app=Flask(__name__)
+
+# Conditional feature imports - enabled via environment variables
+if os.getenv('ENABLE_BACKUP', '').lower() == 'true':
+    try:
+        import db_backup
+        print("Backup functionality enabled")
+    except ImportError:
+        print("Warning: Could not load backup module")
+
+if os.getenv('USE_CONFIG_FILE', '').lower() == 'true':
+    try:
+        import config_loader
+        print("Configuration file support enabled")
+    except ImportError:
+        print("Warning: Could not load config loader")
+
+if os.getenv('ENHANCED_VALIDATION', '').lower() == 'true':
+    try:
+        import validators
+        print("Enhanced validation enabled")
+    except ImportError:
+        print("Warning: Could not load enhanced validators")
+
+if os.getenv('ENABLE_ANALYTICS', '').lower() == 'true':
+    try:
+        from analytics import register_analytics_routes
+        register_analytics_routes(app)
+        print("Analytics module enabled")
+    except ImportError:
+        print("Warning: Could not load analytics module")
+
+if os.getenv('ENABLE_ADVANCED_SEARCH', '').lower() == 'true':
+    try:
+        from advanced_search import register_advanced_routes
+        register_advanced_routes(app)
+        print("Advanced search enabled")
+    except ImportError:
+        print("Warning: Could not load advanced search module")
+
+if os.getenv('ENABLE_LEGACY_SUPPORT', '').lower() == 'true':
+    try:
+        from legacy_support import register_legacy_routes
+        register_legacy_routes(app)
+        print("Legacy API support enabled")
+    except ImportError:
+        print("Warning: Could not load legacy support module")
 
 # root
 @app.route('/')
